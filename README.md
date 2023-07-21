@@ -6,12 +6,12 @@
 
 按照单机器人情况完成仿真环境配置与安装。
 
-#### 2.文件替换 
+#### 2.原仿真文件处理 
 
-* 将battle1v1demo.wbt放入THMOS_webots_sim/worlds/文件夹下
-* 将battle_robot_uni放入THMOS_webots_sim/controllers文件夹下
-* 将battlebot.launch放入bitbots_thmos_meta/bitbots_motion/bitbots_quintic_walk/launch/文件夹下 
-* 将teleop_keyboard.py放入bitbots_thmos_meta/bitbots_misc/bitbots_teleop/scripts文件夹下，替换原文件
+* 将`battle1v1demo.wbt` 放入 `THMOS_webots_sim/worlds/`
+* 将`battle_robot_uni` 放入 `THMOS_webots_sim/controllers/`
+* 将`battlebot.launch` 放入 `bitbots_thmos_meta/bitbots_motion/bitbots_quintic_walk/launch/` 
+* 将`teleop_keyboard.py` 放入`bitbots_thmos_meta/bitbots_misc/bitbots_teleop/scripts/`替换原文件
 
 #### 3.测试
 
