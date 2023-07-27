@@ -1,4 +1,5 @@
 > ver:2023/7/21 实现1v1比赛demo，且方便拓展至NvN。
+> ver:2023/7/27 增加了IMU直接计算获得的方位信息。
 
 ### 对战平台使用方法
 
@@ -8,6 +9,7 @@
 
 #### 2.原仿真文件处理 
 
+* 将`THMOS.proto` 放入 `THMOS_webots_sim/protos/`
 * 将`battle1v1demo.wbt` 放入 `THMOS_webots_sim/worlds/`
 * 将`battle_robot_uni` 放入 `THMOS_webots_sim/controllers/`
 * 将`battlebot.launch` 放入 `bitbots_thmos_meta/bitbots_motion/bitbots_quintic_walk/launch/` 

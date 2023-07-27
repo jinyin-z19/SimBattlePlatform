@@ -78,7 +78,7 @@ class RobotController:
             accel_name = "Accelerometer"
             gyro_name = "Gyro"
             camera_name = "Camera"
-
+            inertial_name = "Imu" 
         # self.robot_node = self.supervisor.getFromDef(self.robot_node_name)
         for motor_name in self.motor_names:
             self.motors.append(self.robot_node.getDevice(motor_name))
@@ -90,6 +90,7 @@ class RobotController:
         self.accel.enable(self.timestep)
         self.gyro = self.robot_node.getDevice(gyro_name)
         self.gyro.enable(self.timestep)
+        self.inertial = self.robot_node.getDevice(inertial_name)
         #if self.is_wolfgang:
             #self.accel_head = self.robot_node.getDevice("imu_head accelerometer")
             #self.accel_head.enable(self.timestep)
@@ -310,6 +311,20 @@ class RobotController:
         msg.angular_velocity.x = gyro_vels[0]
         msg.angular_velocity.y = gyro_vels[1]
         msg.angular_velocity.z = gyro_vels[2]
+        
+        # rpy to caculate rotate matrix
+        rpy_vels = self.inertial.getRollPitchYaw()
+        rpy_x = rpy_vels[0] + np.pi * 0.5
+        rpy_y = -rpy_vels[1]
+        rpy_z = rpy_vels[2]
+        
+        Rx = np.array([[1,0,0],[0,np.cos(rpy_x),-np.sin(rpy_x)],[0,np.sin(rpy_x),np.cos(rpy_x)]])
+        Ry = np.array([[np.cos(rpy_y),0,np.sin(rpy_y)],[0,1,0],[-np.sin(rpy_y),0,np.cos(rpy_y)]])
+        Rz = np.array([[np.cos(rpy_z),-np.sin(rpy_z),0],[np.sin(rpy_z),np.cos(rpy_z),0],[0,0,1]])
+        RR = np.matmul(np.matmul(Rz , Ry) , Rx)
+        RR = RR.flatten()
+        msg.orientation_covariance = RR.tolist()  
+        
         return msg
 
     def publish_imu(self):
