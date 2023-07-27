@@ -2,22 +2,22 @@
   <group ns="r1">
     <include file="$(find bitbots_bringup)/launch/load_robot_description_thmos.launch"/>
 
-    <rosparam file="$(find bitbots_quintic_walk)/config/walking_wolfgang_viz.yaml" command="load"/>
+    <rosparam file="$(find battle_platform)/config/walk_config.yaml" command="load"/>
     <node name="walking" pkg="bitbots_quintic_walk" type="WalkNode" output="screen"/>
     
     <node name="dynamic_kick" pkg="bitbots_dynamic_kick" type="KickNode" output="screen">
-      <rosparam command="load" file="$(find bitbots_dynamic_kick)/config/kick_config.yaml" />
+      <rosparam command="load" file="$(find battle_platform)/config/kick_config.yaml" />
     </node>
   </group>
 
   <group ns="b1">
     <include file="$(find bitbots_bringup)/launch/load_robot_description_thmos.launch"/>
 
-    <rosparam file="$(find bitbots_quintic_walk)/config/walking_wolfgang_viz.yaml" command="load"/>
+    <rosparam file="$(find battle_platform)/config/walk_config.yaml" command="load"/>
     <node name="walking" pkg="bitbots_quintic_walk" type="WalkNode" output="screen"/>
     
     <node name="dynamic_kick" pkg="bitbots_dynamic_kick" type="KickNode" output="screen">
-      <rosparam command="load" file="$(find bitbots_dynamic_kick)/config/kick_config.yaml" />
+      <rosparam command="load" file="$(find battle_platform)/config/kick_config.yaml" />
     </node>
   </group>
 
