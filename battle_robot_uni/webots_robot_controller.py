@@ -5,6 +5,7 @@ import time
 from controller import Robot, Node, Field
 
 import rospy
+import numpy as np
 from geometry_msgs.msg import PointStamped
 from sensor_msgs.msg import JointState, Imu, Image, CameraInfo
 from rosgraph_msgs.msg import Clock
@@ -91,6 +92,7 @@ class RobotController:
         self.gyro = self.robot_node.getDevice(gyro_name)
         self.gyro.enable(self.timestep)
         self.inertial = self.robot_node.getDevice(inertial_name)
+        self.inertial.enable(self.timestep)
         #if self.is_wolfgang:
             #self.accel_head = self.robot_node.getDevice("imu_head accelerometer")
             #self.accel_head.enable(self.timestep)
