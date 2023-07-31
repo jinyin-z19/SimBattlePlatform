@@ -9,6 +9,8 @@
 #### 1.环境配置
 
 * 按照单机器人情况完成仿真环境配置与安装。
+* 安装[SoccerXComm](https://moshumanoid.github.io/SoccerXComm/)SDK
+* python3的版本要3.8以上，否则无法运行安装SDK
 
 #### 2.原仿真文件处理 
 
