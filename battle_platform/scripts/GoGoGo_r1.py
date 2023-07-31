@@ -1,16 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import rospy
 import time
 import cv2 as cv
 import numpy as np
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-import cv2
-import rospy
 from geometry_msgs.msg import Twist
 
 def callback(data):
-	vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+	vel_pub = rospy.Publisher('r1/cmd_vel', Twist, queue_size=10)
 	rate = rospy.Rate(10)
 	print("image recieved")
 	bridge = CvBridge()
@@ -31,7 +30,7 @@ def callback(data):
             [[0.0042244, 0.00280237, 0.999987], [0.999979, 0.00485224, -0.004238], [-0.004864, 0.99998, -0.0027818]])
 		t = np.array([0.05, 0.10, 0.20])
 		homo_pixel_pos = np.row_stack((pixel_pos, [1]))
-		camera_pos = np.linalg.inv(K) @ homo_pixel_pos
+		camera_pos = np.dot(np.linalg.inv(K) , homo_pixel_pos)
 		y = camera_pos[0][0]
 		x = camera_pos[1][0]
         #print(x)
@@ -52,8 +51,8 @@ def callback(data):
 		rate.sleep()
 
 def main():	
-	rospy.init_node('GoGoGo',anonymous=True)
-	GoGoGo = rospy.Subscriber("/usb_cam/image_raw",Image, callback)
+	rospy.init_node("r1GoGoGo",anonymous=True)
+	GoGoGo = rospy.Subscriber("r1/usb_cam/image_raw",Image, callback)
 	rospy.spin()
 
 if __name__ == '__main__':
