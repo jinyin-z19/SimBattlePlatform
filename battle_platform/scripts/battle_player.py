@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 import math
 import time
 import os
@@ -13,18 +12,16 @@ from geometry_msgs.msg import Twist, Vector3, Quaternion
 from sensor_msgs.msg import JointState, Image, Imu
 from bitbots_msgs.msg import JointCommand, KickGoal, KickAction, KickFeedback
 from cv_bridge import CvBridge, CvBridgeError
-
-import asyncio
-platform_main_loop = asyncio.get_event_loop()
-platform_main_task = set()
+from queue import Queue,LifoQueue
 
 class robot_kick:
     def __init__(self, token):
         self.kick_goal = KickGoal()
         self.kick_client = actionlib.SimpleActionClient(token + '/dynamic_kick', KickAction)
-        self.kick_client.wait_for_server()
       
     def kick(self, kick_pos, kick_speed, wait_time_before_kick):
+        self.kick_client.wait_for_server()
+        
         self.kick_goal.header.seq = 1
         self.kick_goal.header.stamp = rospy.Time.now()
         frame_prefix = "" if os.environ.get("ROS_NAMESPACE") is None else os.environ.get("ROS_NAMESPACE") + "/"
@@ -54,48 +51,67 @@ class robot_kick:
         
         rospy.loginfo("kick down")   
     
-class battle_player:
-    def __init__(self, bot_side, bot_index):
+class battle_sensor:
+    def __init__(self, bot_side, bot_index, is_test = False):
         self.token = bot_side + str(bot_index)
-
-        self.walk_goal_publisher = rospy.Publisher(self.token + '/cmd_vel', Twist, queue_size=1)
-        self.head_goal_publisher = rospy.Publisher(self.token + '/walking_motor_goals', JointCommand, queue_size=1)
+        self.is_test = is_test
         self.imu_subscriber = rospy.Subscriber(self.token + '/imu/data_raw', Imu, self.imu_callback, queue_size=1, tcp_nodelay=True)
         self.img_subscriber = rospy.Subscriber(self.token + '/usb_cam/image_raw', Image, self.img_callback, queue_size=1, tcp_nodelay=True)
         
+        self.img_queue = LifoQueue(1)
+        self.imu_queue = LifoQueue(1)
+        
+    def bot_token(self):
+        return self.token
+    
+    def img_callback(self, img_raw): 
+        bridge = CvBridge() 
+        image = bridge.imgmsg_to_cv2(img_raw, "bgr8")
+        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+        
+        # queue
+        if(not self.img_queue.empty()):
+            temp = self.img_queue.get()
+        self.img_queue.put(image)
+        
+        if(self.is_test):
+            print(self.token + ' photo show')
+            cv2.imshow(self.token + ' imshow', image)
+            cv2.waitKey(1)
+
+    def imu_callback(self, imu_raw):
+        accl_info = [imu_raw.linear_acceleration.x, imu_raw.linear_acceleration.y, imu_raw.linear_acceleration.z]     
+        gyro_info = [imu_raw.angular_velocity.x, imu_raw.angular_velocity.y, imu_raw.angular_velocity.z] 
+        
+        # queue
+        if(not self.imu_queue.empty()):
+            temp = self.imu_queue.get()
+        self.imu_queue.put(numpy.array([accl_info, gyro_info]))
+        
+        if(self.is_test):
+            print(self.token + " accelerometer")
+            print(accl_info)
+            print(self.token + " gyroscope")
+            print(gyro_info)
+        
+
+class battle_mover:
+    def __init__(self, bot_side, bot_index, is_test = False):
+        self.token = bot_side + str(bot_index)
+        self.is_test = is_test
+        self.walk_goal_publisher = rospy.Publisher(self.token + '/cmd_vel', Twist, queue_size=1)
+        self.head_goal_publisher = rospy.Publisher(self.token + '/walking_motor_goals', JointCommand, queue_size=1)
         self.bot_kick = robot_kick(self.token)
         
         self.head_goal_msg = JointCommand()
         self.head_goal_msg.joint_names = ["neck", "head"]
-        self.head_goal_msg.velocities = [3.1415926, 3.1415926]
+        self.head_goal_msg.velocities = [numpy.pi, numpy.pi]
         
         self.walk_goal_msg = Twist()
         
-        self.image_rgb = []
         
-        self.accl_info = [0,0,0]
-        self.gyro_info = [0,0,0]
-        
-        platform_main_task.add(asyncio.create_task(self.imu_subscriber.imu_callback))
-        platform_main_task.add(asyncio.create_task(self.img_subscriber.img_callback))
-
     def bot_token(self):
         return self.token
-    
-    async def img_callback(self, img_raw): 
-        bridge = CvBridge() 
-        image = bridge.imgmsg_to_cv2(img_raw, "bgr8")
-        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
-        self.image_rgb = image
-        cv2.imshow('img3', self.image_rgb)
-
-    async def imu_callback(self, imu_raw):
-        self.accl_info = [imu_raw.linear_acceleration.x, imu_raw.linear_acceleration.y, imu_raw.linear_acceleration.z]     
-        self.gyro_info = [imu_raw.angular_velocity.x, imu_raw.angular_velocity.y, imu_raw.angular_velocity.z] 
-        print(self.token + " accelerometer")
-        print(self.accl_info)
-        print(self.token + " gyroscope")
-        print(self.gyro_info)
         
     def pub_walk_goal(self, walk_goal_sim):
         '''
@@ -120,33 +136,29 @@ class battle_player:
         wait_time_before_kick (double)
         '''
         self.bot_kick.kick(kick_pos, kick_speed, wait_time_before_kick) 
-
-#-----------example-------------
-     
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--bot_num', type = int, default = None)
     args = parser.parse_args()
-    
-    rospy.loginfo("------battle platform ver1.0------")
-    rospy.init_node('battle_platform', anonymous=True)
+    print("------battle platform ver1.0 - test------")
+    rospy.init_node('battle_platform_test', anonymous=True) 
     
     red_bots = []
     blue_bots = []
     token_list = []
     if(args.bot_num > 0):
         for i in range(args.bot_num):
-            red_bots.append( battle_player('r', i + 1))
-            blue_bots.append(battle_player('b', i + 1))
+            red_bots.append( battle_mover('r', i + 1, True))
+            blue_bots.append(battle_mover('b', i + 1, True))
             token_list.append( red_bots[i].bot_token())
             token_list.append(blue_bots[i].bot_token())
     else:
         pass
         
-    print(token_list)
-    
+    print(token_list)  
     while not rospy.is_shutdown():
-        platform_main_loop.run_until_complete(platform_main_task)
+        pass
         
 
         

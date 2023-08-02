@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import math
 import time
@@ -12,7 +12,6 @@ import numpy
 from geometry_msgs.msg import Twist, Vector3, Quaternion
 from sensor_msgs.msg import JointState, Image, Imu
 from bitbots_msgs.msg import JointCommand, KickGoal, KickAction, KickFeedback
-from tf.transformations import quaternion_from_euler
 from cv_bridge import CvBridge, CvBridgeError
 
 class robot_kick:
@@ -32,8 +31,12 @@ class robot_kick:
         self.kick_goal.ball_position.y = kick_pos[1]
         self.kick_goal.ball_position.z = kick_pos[2]
 
-        self.kick_goal.kick_direction = Quaternion(*quaternion_from_euler(0,0,0))
-
+        self.kick_goal.kick_direction = Quaternion()
+        self.kick_goal.kick_direction.x = 0
+        self.kick_goal.kick_direction.y = 0
+        self.kick_goal.kick_direction.z = 0
+        self.kick_goal.kick_direction.w = 1
+        
         self.kick_goal.kick_speed = kick_speed
 
         rospy.loginfo("kick goal init")
