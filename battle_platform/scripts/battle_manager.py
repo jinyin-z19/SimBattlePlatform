@@ -50,12 +50,12 @@ class battle_manager:
         print("Team " + self.teamside + " is ready!")
         if(self.botnum> 0):
             while True:
+                await asyncio.sleep(0)
                 for i in range(self.botnum):
                     # test img first
                     if( len(self.bot_sensor)> 0):
                         if(not self.bot_sensor[i].imu_queue.empty()):
                             img_msg = self.bot_sensor[i].img_queue.get()
-                            await asyncio.sleep(0.01)
                             await self.server.push_captured_image(self.bot_sensor[i].token, img_msg)  
                     else:
                         pass               

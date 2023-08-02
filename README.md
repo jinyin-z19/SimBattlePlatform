@@ -9,8 +9,10 @@
 #### 1.环境配置
 
 * 按照单机器人情况完成仿真环境配置与安装。
-* 安装[SoccerXComm](https://moshumanoid.github.io/SoccerXComm/)SDK
-* python3的版本要3.8以上，否则无法运行安装SDK
+* 安装[SoccerXComm](https://moshumanoid.github.io/SoccerXComm/) SDK
+```shell
+pip3 install soccerxcomm
+```
 
 #### 2.原仿真文件处理 
 
@@ -38,7 +40,16 @@ roslaunch battle_platform battlebot.launch
 webots ~/THMOS_webots_sim/worlds/battle1v1demo.wbt
 ```
 
-* 启动键盘测试控制器
+* 启动网络控制器
+
+```shell
+rosrun battle_platform battle_manager.py --bot_num=1
+```
+
+>  1. 该脚本基于[SoccerXComm](https://moshumanoid.github.io/SoccerXComm/) 与 `battle_player.py`
+>  2. 参数`bot_num`为一边上场的机器人的数目
+
+* 启动键盘测试控制器(测试用)
 
 ```shell
 rosrun battle_platform keyboard_controller.py --id=r1
@@ -47,5 +58,3 @@ rosrun battle_platform keyboard_controller.py --id=r1
 >  1. 该脚本通过键盘按键控制机器人的走路、踢球和转头
 >  2. 机器人的代号是红方r1，r2...，蓝方b1，b2，...
 >  3. 上面以红方1号机器人为例。
-
-
