@@ -15,7 +15,7 @@
 ```shell
 pip3 install soccerxcomm
 ```
-
+* 安装显卡驱动， N卡需要opengl才能让webots加速
 #### 2.原仿真文件处理 
 
 * 使用现在的`THMOS_webots_sim`替换原来的webots仿真文件夹。
