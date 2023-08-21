@@ -45,7 +45,8 @@ webots ~/THMOS_webots_sim/worlds/battle1v1demo.wbt
 * 启动网络控制器
 
 ```shell
-rosrun battle_platform battle_manager.py --bot_num=1
+rosrun battle_platform battle_manager.py --bot_num=2
+rosrun battle_platform demo_client.py --bot_num=1
 ```
 
 >  1. 该脚本基于[SoccerXComm](https://moshumanoid.github.io/SoccerXComm/) 与 `battle_player.py`
