@@ -6,6 +6,7 @@ import asyncio
 import datetime
 import numpy as np
 import soccerxcomm as sdk
+import time
 
 from battle_player import battle_sensor, battle_mover
 from queue import Queue,LifoQueue
@@ -19,33 +20,35 @@ class battle_manager:
         
         self.bot_sensor = []
         self.bot_mover = []
-        
-        self.bot_control_msg = sdk.RobotControl()
-        self.bot_status_msg = sdk.RobotStatus()
-        
-        # delete useless msg
-        self.bot_status_msg.head_angle = 0
-        self.bot_status_msg.neck_angle = 0
-        self.bot_status_msg.attitude_angle = np.array([0,0,0])       
-        
         self.token_dict = {}
+                
+        # status msg
+        msg_head_angle = 0
+        msg_neck_angle = 0
+        msg_acceleration  = np.array([0,0,0]) 
+        msg_angular_velocity = np.array([0,0,0]) 
+        msg_attitude_angle = np.array([0,0,0])   
+        msg_team = team_side     
+        self.bot_status_msg = sdk.RobotStatus(msg_head_angle, 
+                                              msg_neck_angle,
+                                              msg_acceleration,
+                                              msg_angular_velocity,
+                                              msg_attitude_angle,
+                                              msg_team)
+                                              
+        self.bot_control_msg = sdk.RobotControl()
         
         if(self.botnum > 0):
             for i in range(self.botnum):
                 self.bot_mover.append(battle_mover(self.teamside, i + 1))
-                print(self.bot_mover[i].token)
                 self.token_dict[self.bot_mover[i].token] = sdk.Server.ClientInfo(team = self.teamside, token = self.bot_mover[i].token)
         else:
             pass
             
-        print("Team " + self.teamside + " mover is ready!")
         self.server = sdk.Server(self.portc, self.portt, self.token_dict)            
         self.msg_thread = threading.Thread(target = self.sensor_thread_run)
-        self.ctl_thread = threading.Thread(target = self.sensor_thread_run)
         self.msg_thread.start()
-        self.ctl_thread.start()
-        
-        self.sever.register_robot_control_callback(self.client_callback_run)
+        self.count = 0
         
             
     def sensor_thread_run(self):
@@ -54,19 +57,27 @@ class battle_manager:
                 self.bot_sensor.append( battle_sensor(self.teamside, i + 1))
         else:
             pass
-        print("Team " + self.teamside + " sensor is ready!")
+        print('team ' + self.teamside + ' robot sensors are ready')
         rospy.spin()        
     
     
     async def sever_thread_run(self):
+        print('waiting for sensor threading start')
+        time.sleep(0.5)
+        
         await self.server.start()
-        print("Team " + self.teamside + " sever is ready!")
+        print('team ' + self.teamside + ' server is ready')
+        
+        await self.server.register_robot_control_callback(self.client_callback_run)
+        print('team ' + self.teamside + ' server callback is ready')
+        
+        
         if(self.botnum> 0):
             while True:
                 await asyncio.sleep(0)
                 for i in range(self.botnum):
                     if( len(self.bot_sensor)> 0):
-                    
+
                         # img msg send
                         if(not self.bot_sensor[i].img_queue.empty()):
                             img_msg = self.bot_sensor[i].img_queue.get()
@@ -77,7 +88,7 @@ class battle_manager:
                             imu_msg = self.bot_sensor[i].imu_queue.get()
                             self.bot_status_msg.acceleration = imu_msg[0:3]
                             self.bot_status_msg.angular_velocity  = imu_msg[3:6]
-                            await self.server.push_robot_status(self.bot_sensor[i].token, imu_msg)  
+                            await self.server.push_robot_status(self.bot_sensor[i].token, self.bot_status_msg)  
                     else:
                         pass               
         else:
@@ -85,27 +96,35 @@ class battle_manager:
         await self.server.close() 
         
     def client_callback_run(self, msg_token, bot_ctl_msg):
-        self.bot_control_msg = bot_ctl_msg
-        if (msg_token[0] == self.teamside):
-            player_index = int(msg_token[0])
-        else:
-            return
+        try:
+            self.count += 1
+            self.bot_control_msg = bot_ctl_msg
+        
+            print('recieve msg from player ' + msg_token)
+        
+            if (msg_token[0] == self.teamside):
+                player_index = int(msg_token[1])
+            else:
+                return
          
-        if(self.bot_control_msg.movement != None):
-            self.bot_mover[player_index].pub_walk_goal([self.bot_control_msg.movement.x, 
+            if(self.bot_control_msg.movement != None):
+                self.bot_mover[player_index].pub_walk_goal([self.bot_control_msg.movement.x, 
                                                         self.bot_control_msg.movement.y,
                                                         self.bot_control_msg.movement.omega_z])
-                                                          
-        if(self.bot_control_msg.head != None):
-             self.bot_mover[player_index].pub_head_goal([self.bot_control_msg.head.neck_angle, 
+                                 
+            if(self.bot_control_msg.head != None):
+                self.bot_mover[player_index].pub_head_goal([self.bot_control_msg.head.neck_angle, 
                                                          self.bot_control_msg.head.hea_angle])
                                                           
-        if(self.bot_control_msg.kick != None):
-            self.bot_mover[player_index].pub_kick_goal([self.bot_control_msg.kick.x, 
+            if(self.bot_control_msg.kick != None):
+                self.bot_mover[player_index].pub_kick_goal([self.bot_control_msg.kick.x, 
                                                         self.bot_control_msg.kick.y,
                                                         self.bot_control_msg.kick.z,
                                                         self.bot_control_msg.kick.speed,
-                                                        self.bot_control_msg.kick.delay,])         
+                                                        self.bot_control_msg.kick.delay,])
+        except:
+            self.count += 1
+            print('bug', self.count)         
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -113,6 +132,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print("------battle platform ver1.0------")
     rospy.init_node('battle_platform', anonymous=True) 
-    print("ros node init")
     red_team = battle_manager(args.bot_num, 'r')
     asyncio.run(red_team.sever_thread_run())
