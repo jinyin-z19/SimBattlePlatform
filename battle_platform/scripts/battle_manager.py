@@ -86,8 +86,8 @@ class battle_manager:
                         # imu msg send
                         if(not self.bot_sensor[i].imu_queue.empty()):
                             imu_msg = self.bot_sensor[i].imu_queue.get()
-                            self.bot_status_msg.acceleration = imu_msg[0:3]
-                            self.bot_status_msg.angular_velocity  = imu_msg[3:6]
+                            self.bot_status_msg.acceleration = imu_msg[0]
+                            self.bot_status_msg.angular_velocity  = imu_msg[1]
                             await self.server.push_robot_status(self.bot_sensor[i].token, self.bot_status_msg)  
                     else:
                         pass               
@@ -109,22 +109,24 @@ class battle_manager:
          
             if(self.bot_control_msg.movement != None):
                 self.bot_mover[player_index].pub_walk_goal([self.bot_control_msg.movement.x, 
-                                                        self.bot_control_msg.movement.y,
-                                                        self.bot_control_msg.movement.omega_z])
+                                                            self.bot_control_msg.movement.y,
+                                                            self.bot_control_msg.movement.omega_z])
                                  
             if(self.bot_control_msg.head != None):
+                print('start!', self.bot_control_msg.head.neck_angle)
                 self.bot_mover[player_index].pub_head_goal([self.bot_control_msg.head.neck_angle, 
-                                                         self.bot_control_msg.head.hea_angle])
+                                                            self.bot_control_msg.head.hea_angle])
+                print('pub success!')
                                                           
             if(self.bot_control_msg.kick != None):
                 self.bot_mover[player_index].pub_kick_goal([self.bot_control_msg.kick.x, 
-                                                        self.bot_control_msg.kick.y,
-                                                        self.bot_control_msg.kick.z,
-                                                        self.bot_control_msg.kick.speed,
-                                                        self.bot_control_msg.kick.delay,])
+                                                            self.bot_control_msg.kick.y,
+                                                            self.bot_control_msg.kick.z,
+                                                            self.bot_control_msg.kick.speed,
+                                                            self.bot_control_msg.kick.delay,])
         except:
             self.count += 1
-            print('bug', self.count)         
+            print('recieve bug state', self.count)         
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

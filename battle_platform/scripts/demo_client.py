@@ -10,7 +10,7 @@ async def main():
 
     await asyncio.sleep(2)
     
-    ctl_msg = sdk.RobotControl(head = sdk.RobotControl.Head(5,5))
+    ctl_msg = sdk.RobotControl(head = sdk.RobotControl.Head(0.5,0.5))
     await client.push_robot_control(ctl_msg)
     
     #captured_image = await client.get_capture_image()
