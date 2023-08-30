@@ -9,7 +9,6 @@ import soccerxcomm as sdk
 import time
 
 from battle_player import battle_sensor, battle_mover
-from queue import Queue,LifoQueue
 
 class battle_manager:
     def __init__(self, bot_num, team_side ='r', port_c = 14514, port_t = 14515):
@@ -23,11 +22,11 @@ class battle_manager:
         self.token_dict = {}
                 
         # status msg
-        msg_head_angle = 0
-        msg_neck_angle = 0
-        msg_acceleration  = np.array([0,0,0]) 
-        msg_angular_velocity = np.array([0,0,0]) 
-        msg_attitude_angle = np.array([0,0,0])   
+        msg_head_angle = 0.0
+        msg_neck_angle = 0.0
+        msg_acceleration  = np.array([0.0,0.0,0.0]) 
+        msg_angular_velocity = np.array([0.0,0.0,0.0]) 
+        msg_attitude_angle = np.array([0.0,0.0,0.0])   
         msg_team = team_side     
         self.bot_status_msg = sdk.RobotStatus(msg_head_angle, 
                                               msg_neck_angle,
@@ -95,28 +94,24 @@ class battle_manager:
             pass
         await self.server.close() 
         
-    def client_callback_run(self, msg_token, bot_ctl_msg):
+    async def client_callback_run(self, msg_token, bot_ctl_msg):
+        self.bot_control_msg = bot_ctl_msg
+        print('recieve msg from player ' + msg_token)
+
         try:
-            self.count += 1
-            self.bot_control_msg = bot_ctl_msg
-        
-            print('recieve msg from player ' + msg_token)
-        
             if (msg_token[0] == self.teamside):
-                player_index = int(msg_token[1])
+                player_index = int(msg_token[1]) - 1
             else:
                 return
-         
+
             if(self.bot_control_msg.movement != None):
                 self.bot_mover[player_index].pub_walk_goal([self.bot_control_msg.movement.x, 
                                                             self.bot_control_msg.movement.y,
                                                             self.bot_control_msg.movement.omega_z])
                                  
             if(self.bot_control_msg.head != None):
-                print('start!', self.bot_control_msg.head.neck_angle)
                 self.bot_mover[player_index].pub_head_goal([self.bot_control_msg.head.neck_angle, 
-                                                            self.bot_control_msg.head.hea_angle])
-                print('pub success!')
+                                                            self.bot_control_msg.head.head_angle])
                                                           
             if(self.bot_control_msg.kick != None):
                 self.bot_mover[player_index].pub_kick_goal([self.bot_control_msg.kick.x, 
@@ -124,9 +119,8 @@ class battle_manager:
                                                             self.bot_control_msg.kick.z,
                                                             self.bot_control_msg.kick.speed,
                                                             self.bot_control_msg.kick.delay,])
-        except:
-            self.count += 1
-            print('recieve bug state', self.count)         
+        except Exception as error:
+            print(error)    
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
