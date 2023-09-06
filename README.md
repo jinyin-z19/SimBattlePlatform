@@ -44,7 +44,7 @@ roscore
 * 启动webots仿真
 
 ```shell
-webots ~/battle_webots_sim/worlds/battle1v1demo.wbt
+webots /battle_webots_sim/worlds/battle1v1demo.wbt
 ```
 
 * 启动网络控制器

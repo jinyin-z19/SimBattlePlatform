@@ -11,7 +11,7 @@ import time
 from battle_player import battle_sensor, battle_mover
 
 class battle_manager:
-    def __init__(self, bot_num, team_side ='r', port_c = 14514, port_t = 14515):
+    def __init__(self, bot_num, team_side ='r', port_c = 14516, port_t = 14517):
         self.botnum = bot_num
         self.teamside = team_side
         self.portc = port_c
@@ -128,5 +128,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print("------battle platform ver1.0------")
     rospy.init_node('battle_platform', anonymous=True) 
-    red_team = battle_manager(args.bot_num, 'r')
+    red_team = battle_manager(args.bot_num, 'b')
     asyncio.run(red_team.sever_thread_run())
